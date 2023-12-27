@@ -1,21 +1,97 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
-	"io"
-	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
-	"path"
 	"strings"
+	"time"
+	"io"
+	"io/ioutil"
+	"path"
+	"regexp"
 
 	"github.com/golang/glog"
 )
 
+var tmpl *template.Template
+var pageText string = " === HOW TO UPLOAD === \nYou can upload files to this site via a simple HTTP POST, e.g. using curl:\ncurl -F 'file=@yourfile.png' {{.}}\n\n === TERMS OF SERVICE === \nService NOT a platform for:\n    * piracy\n    * pornography and gore\n    * extremist material of any kind\n    * malware / botnet C&C\n    * anything related to crypto currencies\n    * backups (yes, this includes your minecraft stuff, seriously  people have been dumping terabytes of it here for years)\n    * CI build artifacts\n    * doxxing, database dumps containing personal information\n    * anything illegal under German law\n"
+var pageFile *string
+
+var protocol *string
+var host *string
+var port *uint64
+
+var lengthName *uint64
+
+
+// Dead simple router that just does the **perform** the job
+func router(w http.ResponseWriter, r *http.Request) {
+	switch {
+	case strings.Contains(r.Header.Get("Content-type"), "multipart/form-data"):
+		upload(w, r)
+	case uuidMatch.MatchString(r.URL.Path):
+		getFile(w, r)
+	default:
+		home(w, r)
+	}
+}
+
+// Route handling, logging and application serving
+func main() {
+	// Random seed creation
+	rand.Seed(time.Now().Unix())
+
+	
+	// Flags for the leveled logging
+	protocol = flag.String("P", "http", "Protocol http/https")
+	port = flag.Uint64("p", 80, "Port")
+	host = flag.String("", "0.0.0.0", "Host")
+	lengthName = flag.Uint64("L", 6, "Length name")
+	pageFile = flag.String("H", "", "HTML file")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0 -p=80 -stderrthreshold=[INFO|WARNING|FATAL] \n")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	flag.Parse()
+	glog.Flush()
+
+	// Home template initalization
+	if *pageFile != "" {
+		tmpl = template.Must(template.ParseFiles(*pageFile))
+	} else {
+		tmpl = template.Must(template.New("base").Parse(pageText))
+	}
+
+	// Routing
+	http.HandleFunc("/", router)
+	http.ListenAndServe(fmt.Sprintf("%s:%d",*host,*port), nil)
+}
+
+
+var uuidMatch *regexp.Regexp = regexp.MustCompile(`(?m)[^\/]+$`)
+
+
+func GenerateUUID() string {
+	var symbols = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
+	var uuid string
+	for i := uint64(0); i < *lengthName; i++ {
+		uuid += string(symbols[rand.Intn(len(symbols)-1)])
+	}
+
+	return uuid
+}
+
+
 // Handles and processes the home page
 func home(w http.ResponseWriter, r *http.Request) {
-	tmpl.Execute(w, template.HTML(fmt.Sprintf(`http://%s/`, r.Host)))
+	tmpl.Execute(w, template.HTML(fmt.Sprintf(`%s://%s/`, *protocol, r.Host)))
 }
 
 // Upload a file, save and attribute a hash
@@ -78,7 +154,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	fmt.Fprintf(w, "OK, Successfully Uploaded\n http://%s/%s\n", r.Host, uuid)
+	fmt.Fprintf(w, "%s://%s/%s\n", *protocol, r.Host, uuid)
 }
 
 // Gets the file using the provided UUID on the URL

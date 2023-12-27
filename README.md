@@ -1,58 +1,33 @@
-## 0x90.st
+## 0xg0
 
 HTTP POST files here:
     `curl -F 'file=@yourfile.png' https://0xg0.st`
 
+### Usage
 
-### Shotout
-
-This project is a simpler and minimal clone of [https://0x0.st](https://0x0.st).
-
-Big thank's to <a>Mia Herkt</a> for the initiative.
-
-This project is built totally in pure [Go](https://go.dev) only using the basic standard library.
-
+Example of run in server
+```
+./0xg0 -stderrthreshold=INFO -P=https -H=./template.html
+./0xg0 -p=8080 -P=https -log_dir="/path/to/log"
+```
 
 ### Operator notes
 If you run a server and like this site, clone it! Centralization is bad.
 If you have any problem, open up an issue in GitHub.
 
-[https://github.com/joaoofreitas/0x90.st](https://github.com/joaoofreitas/0x90.st)
+[https://github.com/MuratovAS/0xg0](https://github.com/MuratovAS/0xg0)
 
-### Usage
+### Shotout
 
+This project is a simpler and minimal clone of [https://0x0.st/](https://0x0.st/) and [https://x0.at/](https://x0.at/).
 
-` ./0xg0.st -h`
+Big thank's to [joaoofreitas](https://github.com/joaoofreitas/0xg0.st) for the initiative.
 
-```
-USAGE: ./0xg0.st -p=8080 -stderrthreshold=[INFO|WARNING|FATAL] -log_dir=[string]
-  -alsologtostderr
-        log to standard error as well as files
-  -log_backtrace_at value
-        when logging hits line file:N, emit a stack trace
-  -log_dir string
-        If non-empty, write log files in this directory
-  -logtostderr
-        log to standard error instead of files
-  -p uint
-        port (default 8000)
-  -stderrthreshold value
-        logs at or above this threshold go to stderr
-  -v value
-        log level for V logs
-  -vmodule value
-        comma-separated list of pattern=N settings for file-filtered logging
-```
+This project is built totally in pure [Go](https://go.dev) only using the basic standard library.
 
-##### Example of run in server
+### Changelog
 
-`./0x0.st -p=80 -stderrthreshold=INFO -log_dir="/path/to/log"`
-
-### LICENSE
-
-```
-Creative Commons Legal Code
-CC0 1.0 Universal
-```
-
-Check LICENSE file for more information about this software license.
+- Ability to connect external html or use inline text
+- Ability to set protocol (http/https), useful in case of reverse proxy
+- You can set the link length
+- Now this program consists of one file

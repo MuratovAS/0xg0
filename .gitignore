@@ -16,5 +16,5 @@
 
 # No need to publish the storage folder neither the executable
 storage/*
-*.st
 log/*
+0xg0

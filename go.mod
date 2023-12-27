@@ -1,4 +1,4 @@
-module github.com/joaoofreitas/0xg0.st
+module github.com/MuratovAS/0xg0
 
 go 1.18
 
