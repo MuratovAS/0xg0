@@ -51,7 +51,7 @@ func main() {
 	// Flags for the leveled logging
 	protocol = flag.String("P", "http", "Protocol http/https")
 	port = flag.Uint64("p", 80, "Port")
-	host = flag.String("", "0.0.0.0", "Host")
+	host = flag.String("h", "0.0.0.0", "Host")
 
 	storageDir = flag.String("S", "./storage", "Storage dir")
 	pageFile = flag.String("H", "", "HTML file")

@@ -20,7 +20,7 @@ Example of run in server:
 help: 
 ```
 USAGE: ./0xg0 -p=80 -stderrthreshold=[INFO|WARNING|FATAL] 
-  - string
+  -h string
     	Host (default "0.0.0.0")
   -H string
     	HTML file
