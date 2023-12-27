@@ -25,6 +25,8 @@ var protocol *string
 var host *string
 var port *uint64
 
+var storageDir *string
+
 var lengthName *uint64
 
 
@@ -50,8 +52,10 @@ func main() {
 	protocol = flag.String("P", "http", "Protocol http/https")
 	port = flag.Uint64("p", 80, "Port")
 	host = flag.String("", "0.0.0.0", "Host")
-	lengthName = flag.Uint64("L", 6, "Length name")
+
+	storageDir = flag.String("S", "./storage", "Storage dir")
 	pageFile = flag.String("H", "", "HTML file")
+	lengthName = flag.Uint64("L", 6, "Length name")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0 -p=80 -stderrthreshold=[INFO|WARNING|FATAL] \n")
@@ -99,7 +103,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	glog.Info("Upload request recieved")
 
 	var uuid string = GenerateUUID()
-	var filepath string = fmt.Sprintf("./storage/%s/", uuid)
+	var filepath string = fmt.Sprintf("%s/%s/", *storageDir, uuid)
 
 	// Prepare to get the file
 	file, header, err := r.FormFile("file")
@@ -120,7 +124,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	_, err = os.Stat(filepath)
 	for !os.IsNotExist(err) {
 		uuid = GenerateUUID()
-		filepath := fmt.Sprintf("./storage/%s/", uuid)
+		filepath := fmt.Sprintf("%s/%s/", *storageDir, uuid)
 		_, err = os.Stat(filepath)
 	}
 
@@ -161,7 +165,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 func getFile(w http.ResponseWriter, r *http.Request) {
 	glog.Info("Retrieve request received")
 	var uuid string = strings.Replace(r.URL.Path[1:], "/", "", -1)
-	var path string = fmt.Sprintf("./storage/%s/", uuid)
+	var path string = fmt.Sprintf("%s/%s/", *storageDir, uuid)
 
 	glog.Infof(`Route "%s"`, r.URL.Path)
 	glog.Infof(`Retrieving UUID "%s"`, uuid)
