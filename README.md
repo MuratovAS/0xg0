@@ -76,3 +76,4 @@ If you have any problem, open up an issue in GitHub.
 - You can set the link length
 - Now this program consists of one file
 - The ability to indicate the path to the storage catalog
+- Add Docker support
