@@ -19,7 +19,7 @@ Example of run in server:
 
 help: 
 ```
-USAGE: ./0xg0 -P=80 -t 0 
+USAGE: ./0xg0 -H=0.0.0.0 -P=80 
   -H string
     	Host (default "0.0.0.0")
   -P uint
@@ -34,6 +34,7 @@ USAGE: ./0xg0 -P=80 -t 0
     	Storage dir (default "./storage")
   -t int
     	Storage time (in hours) (default 168)
+```
 
 ### Docker
 

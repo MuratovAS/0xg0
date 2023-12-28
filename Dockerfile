@@ -16,4 +16,4 @@ COPY --from=builder /0xg0/0xg0 /usr/bin/
 EXPOSE 80
 
 VOLUME ["/storage"]
-ENTRYPOINT  ["/usr/bin/0xg0", "-S=/storage", "-stderrthreshold=INFO"]
+ENTRYPOINT  ["/usr/bin/0xg0", "-s=/storage"]
