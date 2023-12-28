@@ -1,7 +1,8 @@
 ## 0xg0
 
 HTTP POST files here:
-    `curl -F 'file=@yourfile.png' https://0xg0.st`
+
+    `curl -F 'file=@yourfile.png' https://youhost`
 
 In this repository there is fork [joaoofreitas](https://github.com/joaoofreitas/0xg0.st), with some improvements.
 
@@ -45,8 +46,8 @@ docker build -t 0xg0  .
 
 Run:
 ```
-docker run --rm -p 80:80 -v ./storage:/storage 0xg0:latest
-docker run --rm -p 443:80 -v ./template.html:/template.html 0xg0:latest -T=/template.html -p=https
+docker run --rm -p 80:80 -v ./storage:/storage 0xg0:latest -p=https
+docker run --rm -p 80:80 -v ./template.html:/template.html 0xg0:latest -T=/template.html
 ```
 
 
@@ -54,7 +55,6 @@ docker run --rm -p 443:80 -v ./template.html:/template.html 0xg0:latest -T=/temp
 If you run a server and like this site, clone it! Centralization is bad.
 
 If you have any problem, open up an issue in GitHub.
-
 [https://github.com/MuratovAS/0xg0](https://github.com/MuratovAS/0xg0)
 
 ### Changelog
