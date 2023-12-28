@@ -13,7 +13,7 @@ This project is built totally in pure [Go](https://go.dev) only using the basic 
 
 Example of run in server:
 ```
-./0xg0 -H=./template.html  -s=./storage
+./0xg0 -T=./template.html  -s=./storage
 ./0xg0 -P 443 -p https -l 12 -t 24
 ```
 
