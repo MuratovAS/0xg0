@@ -4,15 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
-	"time"
-	"io"
-	"io/ioutil"
 	"path"
 	"regexp"
+	"strings"
+	"time"
 
 	"github.com/golang/glog"
 )
@@ -28,7 +28,7 @@ var port *uint64
 var storageDir *string
 
 var lengthName *uint64
-
+var storageTime *int
 
 // Dead simple router that just does the **perform** the job
 func router(w http.ResponseWriter, r *http.Request) {
@@ -47,18 +47,20 @@ func main() {
 	// Random seed creation
 	rand.Seed(time.Now().Unix())
 
-	
 	// Flags for the leveled logging
-	protocol = flag.String("P", "http", "Protocol http/https")
-	port = flag.Uint64("p", 80, "Port")
-	host = flag.String("h", "0.0.0.0", "Host")
+	protocol = flag.String("p", "http", "Protocol http/https")
+	port = flag.Uint64("P", 80, "Port")
+	host = flag.String("H", "0.0.0.0", "Host")
 
-	storageDir = flag.String("S", "./storage", "Storage dir")
-	pageFile = flag.String("H", "", "HTML file")
-	lengthName = flag.Uint64("L", 6, "Length name")
+	pageFile = flag.String("T", "", "HTML file")
+
+	storageDir = flag.String("s", "./storage", "Storage dir")
+	storageTime = flag.Int("t", 168, "Storage time (in hours)")
+	lengthName = flag.Uint64("l", 6, "Length name")
+	
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0 -p=80 -stderrthreshold=[INFO|WARNING|FATAL] \n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0 -P=80 -t 0 \n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -73,14 +75,16 @@ func main() {
 		tmpl = template.Must(template.New("base").Parse(pageText))
 	}
 
+	if *storageTime != 0 {
+		go removeFile()
+	}
+	
 	// Routing
 	http.HandleFunc("/", router)
-	http.ListenAndServe(fmt.Sprintf("%s:%d",*host,*port), nil)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil)
 }
 
-
 var uuidMatch *regexp.Regexp = regexp.MustCompile(`(?m)[^\/]+$`)
-
 
 func GenerateUUID() string {
 	var symbols = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
@@ -91,7 +95,6 @@ func GenerateUUID() string {
 
 	return uuid
 }
-
 
 // Handles and processes the home page
 func home(w http.ResponseWriter, r *http.Request) {
@@ -188,8 +191,42 @@ func getFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var filename = files[0].Name()
-	glog.Infof(`Retrieving Filename "%s"`, fmt.Sprintf("./%s", filename))
+	glog.Infof(`Retrieving Filename "%s"`, fmt.Sprintf("%s", filename))
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-	http.ServeFile(w, r, fmt.Sprintf("./%s/%s", path, filename))
+	http.ServeFile(w, r, fmt.Sprintf("%s/%s", path, filename))
+}
+
+func removeFile() {
+	ticker := time.NewTicker(1 * time.Hour) //Hours
+	for _ = range ticker.C {
+		glog.Info("Scheduled removeFile.")
+		
+		lst, err := ioutil.ReadDir(*storageDir)
+		if err != nil {
+			panic(err)
+		}
+
+		today := time.Now() 
+		past := today.Add(time.Duration(*storageTime * -1) * time.Hour) 
+		
+		for _, val := range lst {
+			if val.IsDir() {
+				path := fmt.Sprintf("%s/%s", *storageDir, val.Name())
+				fileInfo, err := os.Stat(path)
+				if err != nil {
+					glog.Errorf("Error: %s", err.Error())
+				}
+				modificationTime := fileInfo.ModTime()
+				if past.After(modificationTime) {
+					glog.Infof(`Remove "%s"`, path)
+				    err := os.RemoveAll(path) 
+				    if err != nil { 
+						glog.Errorf("Error: %s", err.Error())
+				   }  
+				}
+			}
+		}
+
+	}
 }

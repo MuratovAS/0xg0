@@ -13,40 +13,27 @@ This project is built totally in pure [Go](https://go.dev) only using the basic 
 
 Example of run in server:
 ```
-./0xg0 -stderrthreshold=INFO -P=https -H=./template.html
-./0xg0 -p=8080 -P=https -log_dir="/path/to/log"
+./0xg0 -H=./template.html  -s=./storage
+./0xg0 -P 443 -p https -l 12 -t 24
 ```
 
 help: 
 ```
-USAGE: ./0xg0 -p=80 -stderrthreshold=[INFO|WARNING|FATAL] 
-  -h string
-    	Host (default "0.0.0.0")
+USAGE: ./0xg0 -P=80 -t 0 
   -H string
-    	HTML file
-  -L uint
-    	Length name (default 6)
-  -P string
-    	Protocol http/https (default "http")
-  -S string
-    	Storage dir (default "./storage")
-  -alsologtostderr
-    	log to standard error as well as files
-  -log_backtrace_at value
-    	when logging hits line file:N, emit a stack trace
-  -log_dir string
-    	If non-empty, write log files in this directory
-  -logtostderr
-    	log to standard error instead of files
-  -p uint
+    	Host (default "0.0.0.0")
+  -P uint
     	Port (default 80)
-  -stderrthreshold value
-    	logs at or above this threshold go to stderr
-  -v value
-    	log level for V logs
-  -vmodule value
-    	comma-separated list of pattern=N settings for file-filtered logging
-```
+  -T string
+    	HTML file
+  -l uint
+    	Length name (default 6)
+  -p string
+    	Protocol http/https (default "http")
+  -s string
+    	Storage dir (default "./storage")
+  -t int
+    	Storage time (in hours) (default 168)
 
 ### Docker
 
@@ -58,7 +45,7 @@ docker build -t 0xg0  .
 Run:
 ```
 docker run --rm -p 80:80 -v ./storage:/storage 0xg0:latest
-docker run --rm -p 443:80 -v ./template.html:/template.html 0xg0:latest -H=/template.html -P=https
+docker run --rm -p 443:80 -v ./template.html:/template.html 0xg0:latest -T=/template.html -p=https
 ```
 
 
@@ -77,3 +64,4 @@ If you have any problem, open up an issue in GitHub.
 - Now this program consists of one file
 - The ability to indicate the path to the storage catalog
 - Add Docker support
+- Auto delete files by time
