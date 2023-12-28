@@ -166,7 +166,7 @@ func getFile(w http.ResponseWriter, r *http.Request) {
 	var uuid string = strings.Replace(r.URL.Path[1:], "/", "", -1)
 	var path string = fmt.Sprintf("%s/%s/", *storageDir, uuid)
 
-	log.Printf("Retrieve request %s", uuid)
+	log.Printf(`Retrieve request "%s"`, uuid)
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
