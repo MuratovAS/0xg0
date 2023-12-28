@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -13,8 +14,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 var tmpl *template.Template
@@ -57,16 +56,14 @@ func main() {
 	storageDir = flag.String("s", "./storage", "Storage dir")
 	storageTime = flag.Int("t", 168, "Storage time (in hours)")
 	lengthName = flag.Uint64("l", 6, "Length name")
-	
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0 -P=80 -t 0 \n")
+		fmt.Fprintf(os.Stderr, "USAGE: ./0xg0 -H=0.0.0.0 -P=80 \n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
 	flag.Parse()
-	glog.Flush()
 
 	// Home template initalization
 	if *pageFile != "" {
@@ -78,7 +75,7 @@ func main() {
 	if *storageTime != 0 {
 		go removeFile()
 	}
-	
+
 	// Routing
 	http.HandleFunc("/", router)
 	http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), nil)
@@ -103,23 +100,23 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // Upload a file, save and attribute a hash
 func upload(w http.ResponseWriter, r *http.Request) {
-	glog.Info("Upload request recieved")
 
 	var uuid string = GenerateUUID()
+	log.Printf(`Upload request "%s"`, uuid)
 	var filepath string = fmt.Sprintf("%s/%s/", *storageDir, uuid)
 
 	// Prepare to get the file
 	file, header, err := r.FormFile("file")
 	defer func() {
 		file.Close()
-		glog.Infof(`File "%s" closed.`, header.Filename)
+		log.Printf(`Closed "%s/%s"`, uuid, header.Filename)
 	}()
 	if err != nil {
-		glog.Errorf("Error retrieving file.")
-		glog.Errorf("Error: %s", err.Error())
+		// log.Printf("Error retrieving file")
+		log.Printf("Error: %s", err.Error())
 
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Bad request. Error retrieving file.")
+		fmt.Fprintf(w, "Bad request. Error retrieving file")
 		return
 	}
 
@@ -132,31 +129,31 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := os.MkdirAll(filepath, 0777); err != nil {
-		glog.Error("Error saving file on server...")
-		glog.Errorf("Error: %s", err.Error())
+		// log.Printf("Error saving file on server..")
+		log.Printf("Error: %s", err.Error())
 
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "No storage available.")
+		fmt.Fprintf(w, "No storage available")
 		return
 	}
 
 	f, err := os.OpenFile(path.Join(filepath, header.Filename), os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
-		glog.Errorf("Error creating file.")
-		glog.Errorf("Error: %s", err.Error())
+		// log.Printf("Error creating file")
+		log.Printf("Error: %s", err.Error())
 
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error creating file.")
+		fmt.Fprintf(w, "Error creating file")
 		return
 	}
 	defer f.Close()
 
 	if _, err := io.Copy(f, file); err != nil {
-		glog.Errorf("Error writing file.")
-		glog.Errorf("Error: %s", err.Error())
+		// log.Printf("Error writing file")
+		log.Printf("Error: %s", err.Error())
 
 		w.WriteHeader(http.StatusInsufficientStorage)
-		fmt.Fprintf(w, "Insufficient Storage. Error storing file.")
+		fmt.Fprintf(w, "Insufficient Storage. Error storing file")
 		return
 	}
 
@@ -166,32 +163,29 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 // Gets the file using the provided UUID on the URL
 func getFile(w http.ResponseWriter, r *http.Request) {
-	glog.Info("Retrieve request received")
 	var uuid string = strings.Replace(r.URL.Path[1:], "/", "", -1)
 	var path string = fmt.Sprintf("%s/%s/", *storageDir, uuid)
 
-	glog.Infof(`Route "%s"`, r.URL.Path)
-	glog.Infof(`Retrieving UUID "%s"`, uuid)
-	glog.Infof(`Retrieving Path "%s"`, path)
+	log.Printf("Retrieve request %s", uuid)
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		glog.Errorf(`Error walking filepath "%s"`, path)
-		glog.Errorf("Error: %s", err.Error())
+		// log.Printf(`Error walking filepath "%s"`, path)
+		log.Printf("Error: %s", err.Error())
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "File Not Found.")
+		fmt.Fprintf(w, "File Not Found")
 		return
 	}
 
 	if len(files) <= 0 {
-		glog.Errorf(`No files in directory "%s"`, path)
+		log.Printf(`No files in directory "%s"`, path)
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "File Not Found.")
+		fmt.Fprintf(w, "File Not Found")
 		return
 	}
 
 	var filename = files[0].Name()
-	glog.Infof(`Retrieving Filename "%s"`, fmt.Sprintf("%s", filename))
+	log.Printf(`Retrieving "%s"`, path)
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	http.ServeFile(w, r, fmt.Sprintf("%s/%s", path, filename))
@@ -200,30 +194,33 @@ func getFile(w http.ResponseWriter, r *http.Request) {
 func removeFile() {
 	ticker := time.NewTicker(1 * time.Hour) //Hours
 	for _ = range ticker.C {
-		glog.Info("Scheduled removeFile.")
-		
+		log.Printf("Scheduled removeFile")
+
 		lst, err := ioutil.ReadDir(*storageDir)
 		if err != nil {
-			panic(err)
+			// log.Printf(`Error read dir "%s"`, *storageDir)
+			log.Printf("Error: %s", err.Error())
 		}
 
-		today := time.Now() 
-		past := today.Add(time.Duration(*storageTime * -1) * time.Hour) 
-		
+		today := time.Now()
+		past := today.Add(time.Duration(*storageTime*-1) * time.Hour)
+
 		for _, val := range lst {
 			if val.IsDir() {
 				path := fmt.Sprintf("%s/%s", *storageDir, val.Name())
 				fileInfo, err := os.Stat(path)
 				if err != nil {
-					glog.Errorf("Error: %s", err.Error())
+					// log.Printf(`Error read info "%s"`, path)
+					log.Printf("Error: %s", err.Error())
 				}
 				modificationTime := fileInfo.ModTime()
 				if past.After(modificationTime) {
-					glog.Infof(`Remove "%s"`, path)
-				    err := os.RemoveAll(path) 
-				    if err != nil { 
-						glog.Errorf("Error: %s", err.Error())
-				   }  
+					log.Printf(`Remove "%s"`, path)
+					err := os.RemoveAll(path)
+					if err != nil {
+						// log.Printf(`Error remove dir "%s"`, path)
+						log.Printf("Error: %s", err.Error())
+					}
 				}
 			}
 		}
